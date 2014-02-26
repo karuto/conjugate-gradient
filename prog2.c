@@ -52,6 +52,15 @@ double* vectorAdd(double* dest, double* a, double* b, int size) {
 	return dest;
 }
 
+double* vectorSubtract(double* dest, double* a, double* b, int size) {
+	printf("== Begin: vector subtracting vector ==");
+	for (int i = 0; i < size; i++) {
+		dest[i] = a[i] - b[i];
+		printf("Vector subtract vector check, round: %d, sum = %lf\n", i, dest[i]);
+	}
+	return dest;
+}
+
 double* matrixVector(double* dest, double* matrix, double* v, int size) {
 	printf("== Begin: matrix vector product ==");
 	//TODO
@@ -135,8 +144,11 @@ int main(int argc, char **argv) {
 	  
 	  
 	  int k = 0;
-	  double x0 = 0.0;
 	  double beta = 0.0;
+	  double alpha = 0.0;
+	  double* s = malloc(order * sizeof(double));
+	  double* x = malloc(order * sizeof(double));
+	  double* x_prev = malloc(order * sizeof(double));
 	  double* p = malloc(order * sizeof(double));
 	  double* p_prev = malloc(order * sizeof(double));
 	  double* r = malloc(order * sizeof(double));
@@ -158,13 +170,29 @@ int main(int argc, char **argv) {
 	  	  memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
 	  	  k++;
 		  if (k == 1) {
+			  /* P_1 = R_0 */
 			  memcpy(p, r, (order * sizeof(double)));
 		  } else {
+			  /* BETA_k = [R_(k-1) * R_(k-1)] / [R_(k-2) * R_(k-2)]  */
 			  beta = dotProduct(r_prev, r_prev, order)/dotProduct(r_prev_prev, r_prev_prev, order);
+			  
+			  /* P_k = R_(k-1) + [BETA_k * P_(k-1)] */
 			  tmpVector = scalarVector(tmpVector, p_prev, beta, order);
 			  p = vectorAdd(p, r_prev, tmpVector, order);
 		  }
-		  tmpVector = matrixVector(tmpVector, matrix, p, order);
+		  /* S_k = (A * P_k) */
+		  s = matrixVector(s, matrix, p, order);
+		  
+		  /* ALPHA_k = [R_(k-1) * R_(k-1)] / [P_k * S_k] */
+		  alpha = dotProduct(r_prev, r_prev, order)/dotProduct(p, s, order);
+		  
+		  /* X_k = X_(k-1) + (ALPHA_k * P_k) */
+		  tmpVector = scalarVector(tmpVector, alpha, p, order);
+		  x = vectorAdd(x, x_prev, tmpVector, order);
+		  
+		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
+		  tmpVector = scalarVector(tmpVector, alpha, s, order);
+		  r = vectorSubtract(r, r_prev, tmpVector, order);
 	  }
 	  
 	  
