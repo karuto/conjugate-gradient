@@ -232,7 +232,7 @@ int main(int argc, char **argv) {
 		  
 		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
 		  tmpVector = scalarVector(tmpVector, s, alpha, order);
-		  r = vectorSubtract(r, r_prev, tmpVector, order);
+		  r = vectorSubtract(r, r, tmpVector, order);
 		  
 		  		  	  printf("################# R:\n");
 	  for (i = 0; i < (order); i++) {
@@ -246,8 +246,9 @@ int main(int argc, char **argv) {
 	  	  printf("%f\n", x[i]);
 	  }
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
+	  double norm;
 	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", r[i]);
+	  	  norm += r[i]*r[i]
 	  }
 	  /*
 	  printf("The norm of the residual calculated directly from the definition of residual: \n");

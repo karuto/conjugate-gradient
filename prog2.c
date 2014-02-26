@@ -246,9 +246,11 @@ int main(int argc, char **argv) {
 	  	  printf("%f\n", x[i]);
 	  }
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
+	  double norm;
 	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", r[i]);
+	  	  norm += r[i]*r[i];
 	  }
+	  printf("%lf\n", sqrt(norm));
 	  /*
 	  printf("The norm of the residual calculated directly from the definition of residual: \n");
 	  //TODO: This is just a holder.
