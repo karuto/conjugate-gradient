@@ -66,8 +66,8 @@ double* matrixVector(double* dest, double* matrix, double* v, int size) {
 	//TODO
 	for (int i = 0; i < size; i++) {
 		for (int j = 0; j < size; j++) {
-			
-			printf("Matrix vector check, round: %d, sum = %lf\n", i, dest[i]);			
+			dest[i] += v[i]*matrix[i*size+j];
+			printf("Matrix vector check, round: %d, sum = %lf\n", i, dest[i]);
 		}
 	}
 	return dest;
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
 	  }
 	  printf("==== PRINTING R ==== \n");
 	  
-	  while ((k < max_iterations) && (dotProduct(r, r, order) < tolerance)) {
+	  while ((k < max_iterations) && (dotProduct(r, r, order) > tolerance)) {
 	      memcpy(p_prev, p, (order * sizeof(double)));
 	  	  memcpy(r_prev, r, (order * sizeof(double)));
 	  	  memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
@@ -197,11 +197,11 @@ int main(int argc, char **argv) {
 	  printf("========= LOOP COMPLETED =========\n");
 	  printf("Number of iterations: %d\n", k);
 	  printf("Solution to the matrix:\n");
-	  for (i = 0; i < (order * order); i++) {
+	  for (i = 0; i < (order); i++) {
 	  	  printf("%f\n", x[i]);
 	  }
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
-	  for (i = 0; i < (order * order); i++) {
+	  for (i = 0; i < (order); i++) {
 	  	  printf("%f\n", r[i]);
 	  }
 	  /*
