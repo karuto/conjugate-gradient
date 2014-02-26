@@ -87,29 +87,37 @@ void assignVector(double* a, double* b, int size) {
 
 
 
+
 int main(int argc, char **argv) {
-  int        p, i, j, k, order, max_iterations;
+  int        p, i, j, k, order, max_iterations, suppress_output;
   double	 tolerance;
    
   // for (i = 0; i < argc; i++) {
   // 	  printf("##### %d = %s\n", i, argv[i]);
   // }
   
-  // printf("argc = %d\n", argc);
+  suppress_output = 0;
+  
   if (argc > 3) {
+	  /* Parse command line arguments */
 	  order = atoi(argv[1]); /* Determines dimension of matrix A */
-      printf("==== Dimension of matrix: %d\n", order);
+      // printf("==== Dimension of matrix: %d\n", order);
+	  
 	  tolerance = atof(argv[2]);
+	  
 	  max_iterations = atoi(argv[3]); 
-	  if (argc == 5) {
+	  
+	  /* Use string compare to check optional suppress */
+	  if (argc == 5 && (strcmp(argv[4], "n") == 0)) {
 		  printf("==== %s\n", argv[4]);
+		  suppress_output = 1;
 	  } else {
 		  printf("==== No optional command \n");
 	  }
 
 	  /* 1-d array for A */
 	  double* matrix = malloc(order * order * sizeof(double)); 
- 	  /* Right hand side, b */ 
+ 	  /* Right hand side vector, B */ 
 	  double* rhs = malloc(order * sizeof(double));
 	  
 	  
@@ -122,21 +130,20 @@ int main(int argc, char **argv) {
 	      }
 	  }
 	  
-	  /* Read right hand side (b) */
+	  /* Read right hand side (B) */
 	  for (i = 0; i < order; i++) {
 	  	  if (!scanf("%lf", &rhs[i])) {
 	    	  break;
 	      }
 	  }
 	  
-	  
+	  /*
 	  printf("==== PRINTING MATRIX ==== \n");
 	  for (i = 0; i < (order * order); i++) {
 	  	  printf("%f\n", matrix[i]);
 	  }
 	  printf("==== PRINTING MATRIX ==== \n");
-	  
-	  
+	  */
 
 	  /*
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
@@ -218,11 +225,14 @@ int main(int argc, char **argv) {
 		  
 	  }
 	  
-	  printf("========= Solver Completed =========\n");
-	  printf("Number of iterations: %d\n", k);
-	  printf("Solution to the matrix:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", x[i]);
+	  printf("========= Solver Completed ========= \n");
+	  printf("Number of iterations: %d \n", k);
+	  
+	  if (suppress_output == 0) {
+		  printf("Solution to the matrix: \n");
+		  for (i = 0; i < (order); i++) {
+		  	  printf("%f\n", x[i]);
+		  }	  	
 	  }
 	  
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
