@@ -34,10 +34,32 @@ double dotProduct(double* a, double* b, int size) {
 	return sum;
 }
 
-double scalarVector(double* dest, double* v, double s, int size) {
+double* scalarVector(double* dest, double* v, double s, int size) {
+	printf("== Begin: scalar vector product ==");
 	for (int i = 0; i < size; i++) {
 		dest[i] = s * v[i];
-		printf("== Scalar vector product check, round: %d, sum = %lf\n", i, dest[i]);
+		printf("Scalar vector product check, round: %d, sum = %lf\n", i, dest[i]);
+	}
+	return dest;
+}
+
+double* vectorAdd(double* dest, double* a, double* b, int size) {
+	printf("== Begin: vector adding vector ==");
+	for (int i = 0; i < size; i++) {
+		dest[i] = a[i] + b[i];
+		printf("Vector add vector check, round: %d, sum = %lf\n", i, dest[i]);
+	}
+	return dest;
+}
+
+double* matrixVector(double* dest, double* matrix, double* v, int size) {
+	printf("== Begin: matrix vector product ==");
+	//TODO
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			
+			printf("Matrix vector check, round: %d, sum = %lf\n", i, dest[i]);			
+		}
 	}
 	return dest;
 }
@@ -139,9 +161,10 @@ int main(int argc, char **argv) {
 			  memcpy(p, r, (order * sizeof(double)));
 		  } else {
 			  beta = dotProduct(r_prev, r_prev, order)/dotProduct(r_prev_prev, r_prev_prev, order);
-			  scalarVector(tmpVector, p_prev, beta, order);
-			  
+			  tmpVector = scalarVector(tmpVector, p_prev, beta, order);
+			  p = vectorAdd(p, r_prev, tmpVector, order);
 		  }
+		  tmpVector = matrixVector(tmpVector, matrix, p, order);
 	  }
 	  
 	  
