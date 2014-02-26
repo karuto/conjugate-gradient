@@ -4,7 +4,7 @@
 
 *.DS_Store
 mpiexec
-conj_grad.c
+conj_grad_bin.c
 test
 
 

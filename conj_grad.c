@@ -6,7 +6,7 @@
  *
  * Compile:    gcc -g -Wall -lm -o conj_grad conj_grad.c
  * Run:        conj_grad [order] [tolerance] [iterations] 
- *                       [Optional suppress output(n)]
+ *                       [Optional suppress output(n)] < [file]
  *
  * Input:      A file that contains a symmetric, positive definite matrix A,  
  *             and the corresponding right hand side vector B. Preferably, each
@@ -105,7 +105,7 @@ void assignVector(double* a, double* b, int size) {
 
 
 int main(int argc, char **argv) {
-  int        p, i, j, k, order, max_iterations, suppress_output;
+  int        i, j, k, order, max_iterations, suppress_output;
   double     start, finish, elapsed;
   double	 tolerance;
    
@@ -259,7 +259,7 @@ int main(int argc, char **argv) {
 	  }
 	  
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
-	  double norm;
+	  double norm = 9999.9999;
 	  for (i = 0; i < (order); i++) {
 	  	  norm += r[i]*r[i];
 	  }
@@ -277,27 +277,28 @@ int main(int argc, char **argv) {
 	  }
 	  printf("%lf\n", sqrt(norm));
 	  
-	  
+
+
+	  /* Free all objects that allocated memory once at the end */
+	  free(matrix);
+	  free(rhs);
+  
+	  free(x);
+	  free(s);
+	  free(p);
+	  free(r);
+  
+	  free(x_prev);
+	  free(p_prev);
+	  free(r_prev);
+	  free(r_prev_prev);
+	  free(holderVector);
+  
 	  
   } else {
 	  printf("Usage: %s [order] [tolerance] [iterations] [Optional suppress output(n)]\n", argv[0]);
   }
-
-  /* Free all objects that allocated memory once at the end */
-  free(matrix);
-  free(rhs);
   
-  free(x);
-  free(s);
-  free(p);
-  free(r);
-  
-  free(x_prev);
-  free(s_prev);
-  free(p_prev);
-  free(r_prev);
-  free(r_prev_prev);
-  free(holderVector);
   
   return 0;
 } /* main */
