@@ -187,13 +187,30 @@ int main(int argc, char **argv) {
 		  alpha = dotProduct(r_prev, r_prev, order)/dotProduct(p, s, order);
 		  
 		  /* X_k = X_(k-1) + (ALPHA_k * P_k) */
-		  tmpVector = scalarVector(tmpVector, alpha, p, order);
+		  tmpVector = scalarVector(tmpVector, p, alpha, order);
 		  x = vectorAdd(x, x_prev, tmpVector, order);
 		  
 		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
-		  tmpVector = scalarVector(tmpVector, alpha, s, order);
+		  tmpVector = scalarVector(tmpVector, s, alpha, order);
 		  r = vectorSubtract(r, r_prev, tmpVector, order);
 	  }
+	  printf("========= LOOP COMPLETED =========\n");
+	  printf("Number of iterations: %d\n", k);
+	  printf("Solution to the matrix:\n");
+	  for (i = 0; i < (order * order); i++) {
+	  	  printf("%f\n", x[i]);
+	  }
+	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
+	  for (i = 0; i < (order * order); i++) {
+	  	  printf("%f\n", r[i]);
+	  }
+	  /*
+	  printf("The norm of the residual calculated directly from the definition of residual: \n");
+	  //TODO: This is just a holder.
+	  for (i = 0; i < (order * order); i++) {
+	  	  printf("%f\n", r[i]);
+	  }
+	  */
 	  
 	  
   } else {
