@@ -88,12 +88,7 @@ int main(int argc, char **argv) {
   
   double	 tolerance;
   int		 order, max_iterations; 
-  char		 suppress[MAX_STRING];
-
-  // for (int i = 0; i < argc; ++i)
-  // {
-  //     printf("argv[%d]: %s\n", i, argv[i]);
-  // }  	  
+  char		 suppress[MAX_STRING];  	  
   
   // printf("argc = %d\n", argc);
   if (argc == 7 || argc == 8) {
@@ -148,7 +143,7 @@ int main(int argc, char **argv) {
 	  
 	  
 	  int k = 0;
-	  double beta = 0.0;
+	  double beta;
 	  double alpha;
 	  double* s = malloc(order * sizeof(double));
 	  double* x = malloc(order * sizeof(double));
@@ -161,17 +156,8 @@ int main(int argc, char **argv) {
 	  double* tmpVector = malloc(order * sizeof(double));
 	  
 	  memcpy(r, rhs, (order * sizeof(double)));
-
-/*
-	  printf("==== PRINTING R ==== \n");
-	  for (i = 0; i < order; i++) {
-	  	  printf("%f\n", r[i]);
-	  }
-	  printf("==== PRINTING R ==== \n");
-*/
 	  
 	  while ((k < max_iterations) && (dotProduct(r, r, order) > tolerance)) {
-	      memcpy(x_prev, x, (order * sizeof(double)));
 	  	  // memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
 	  	  k++;
 		  if (k == 1) {
@@ -180,36 +166,15 @@ int main(int argc, char **argv) {
 		  } else {
 			  /* BETA_k = [R_(k-1) * R_(k-1)] / [R_(k-2) * R_(k-2)]  */
 			  beta = dotProduct(r, r, order)/dotProduct(r_prev, r_prev, order);
-			  printf("BETA === %lf\n", beta);
 			  
 	      memcpy(p_prev, p, (order * sizeof(double)));
 	      
 			  /* P_k = R_(k-1) + [BETA_k * P_(k-1)] */
-			  
 			  tmpVector = scalarVector(tmpVector, p_prev, beta, order);
 			  p = vectorAdd(p, r, tmpVector, order);
-			  
-		printf("################# R1:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", r[i]);
-	  }			  
-		printf("################# P0:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", p_prev[i]);
-	  }			  
-		printf("################# P1:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", p[i]);
-	  }
 		  }
 		  /* S_k = (A * P_k) */
 		  s = matrixVector(s, matrix, p, order);
-		  
-		  
-		  	  printf("################# S:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", s[i]);
-	  }
 	  
 	  	memcpy(r_prev, r, (order * sizeof(double)));
 		  
@@ -218,27 +183,18 @@ int main(int argc, char **argv) {
 		  double d2 = dotProduct(p, s, order);
 		  alpha = d1/d2;
 		  
-		  printf("################## ALPHA = %lf\n", alpha);
-		  
+	    memcpy(x_prev, x, (order * sizeof(double)));
 	  		  
 		  /* X_k = X_(k-1) + (ALPHA_k * P_k) */
 		  tmpVector = scalarVector(tmpVector, p, alpha, order);
 		  x = vectorAdd(x, x_prev, tmpVector, order);
-
-		printf("################# X:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", x[i]);
-	  }
 		  
 		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
 		  tmpVector = scalarVector(tmpVector, s, alpha, order);
 		  r = vectorSubtract(r, r, tmpVector, order);
 		  
-		  		  	  printf("################# R:\n");
-	  for (i = 0; i < (order); i++) {
-	  	  printf("%f\n", r[i]);
 	  }
-	  }
+	  
 	  printf("========= LOOP COMPLETED =========\n");
 	  printf("Number of iterations: %d\n", k);
 	  printf("Solution to the matrix:\n");
