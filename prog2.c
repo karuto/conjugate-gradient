@@ -24,6 +24,28 @@
 
 const int MAX_STRING = 100;
 
+double dotProduct(double* a, double* b, int size) {
+	double sum = 0;
+	for (int i = 0; i < size; i++) {
+		sum += (a[i] * b[i]);
+		printf("Dot product check, round: %d, sum = %lf\n", i, sum);
+	}
+	printf("==== Dot product check, final: %lf\n", sum);
+	return sum;
+}
+
+double scalarVector(double* dest, double* v, double s, int size) {
+	for (int i = 0; i < size; i++) {
+		dest[i] = s * v[i];
+		printf("== Scalar vector product check, round: %d, sum = %lf\n", i, dest[i]);
+	}
+	return dest;
+}
+
+
+
+
+
 int main(int argc, char **argv) {
   char       hostname[MAX_STRING];
   int        my_rank, p, len, i, j, k;
@@ -90,8 +112,38 @@ int main(int argc, char **argv) {
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
 	  
 	  
-	  // double k = malloc(sizeof(double));
-	  // double x0 = malloc(sizeof(double));
+	  int k = 0;
+	  double x0 = 0.0;
+	  double beta = 0.0;
+	  double* p = malloc(order * sizeof(double));
+	  double* p_prev = malloc(order * sizeof(double));
+	  double* r = malloc(order * sizeof(double));
+	  double* r_prev = malloc(order * sizeof(double));
+	  double* r_prev_prev = malloc(order * sizeof(double));
+	  double* tmpVector = malloc(order * sizeof(double));
+	  
+	  memcpy(r, rhs, (order * sizeof(double)));
+
+	  printf("==== PRINTING R ==== \n");
+	  for (i = 0; i < order; i++) {
+	  	  printf("%f\n", r[i]);
+	  }
+	  printf("==== PRINTING R ==== \n");
+	  
+	  while ((k < max_iterations) && (dotProduct(r, r, order) < tolerance)) {
+	      memcpy(p_prev, p, (order * sizeof(double)));
+	  	  memcpy(r_prev, r, (order * sizeof(double)));
+	  	  memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
+	  	  k++;
+		  if (k == 1) {
+			  memcpy(p, r, (order * sizeof(double)));
+		  } else {
+			  beta = dotProduct(r_prev, r_prev, order)/dotProduct(r_prev_prev, r_prev_prev, order);
+			  scalarVector(tmpVector, p_prev, beta, order);
+			  
+		  }
+	  }
+	  
 	  
   } else {
 	  printf("Incorrect usage. \nUsage: mpiexec -n 4 ./conj_grad 100 1.0e-6 50 (n)\n");
@@ -139,5 +191,9 @@ int main(int argc, char **argv) {
   // MPI_Finalize();
   return 0;
 } /* main */
+
+
+
+
 
 
