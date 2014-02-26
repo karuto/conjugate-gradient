@@ -29,20 +29,17 @@ int main(int argc, char **argv) {
   int        my_rank, p, len, i, j, k;
   double     start, finish, elapsed, average_elapsed;
   
-  
   double	 tolerance;
   int		 order, max_iterations; 
   char		 suppress[MAX_STRING];
-  
+
+  // for (int i = 0; i < argc; ++i)
+  // {
+  //     printf("argv[%d]: %s\n", i, argv[i]);
+  // }  	  
   
   // printf("argc = %d\n", argc);
   if (argc == 7 || argc == 8) {
-	  
-	  // for (int i = 0; i < argc; ++i)
-	  // {
-	  //     printf("argv[%d]: %s\n", i, argv[i]);
-	  // }  	
-	  
 	  //TODO: Change these as we move into parallel, this is for sequential version only
 	  
 	  order = atoi(argv[4]); /* Determines dimension of matrix A */
@@ -57,11 +54,6 @@ int main(int argc, char **argv) {
 
 	  double* rhs = malloc(order * sizeof(double)); /* Right hand side, b */
 	  double* matrix = malloc(order * order * sizeof(double)); /* 1-d array */
-	  // for (i = 0; i < order; ++i) { /* number of rows */
-	  // 		  matrix[i] = malloc(order*sizeof(double));	/* number of cols */	  	
-	  // }
-	  FILE *file;
-	  file=fopen("matrix.txt", "r");
 	  
 	  int i, j;
 	  
@@ -69,7 +61,7 @@ int main(int argc, char **argv) {
 	  for (i = 0; i < order; i++) { /* number of rows */
 	  	  for (j = 0; j < order; j++) { /* number of cols */
 	      //Use lf format specifier, %c is for character
-	        if (!fscanf(file, "%lf", &matrix[(i * order) + j])) {
+	        if (!scanf("%lf", &matrix[(i * order) + j])) {
 	      		break;
 	        }
 		    // printf("%lf\n", matrix[(i * order) + j]); 
@@ -85,12 +77,11 @@ int main(int argc, char **argv) {
 	  
 	  /* Read right hand side */
 	  for (i = 0; i < order; i++) {
-	  	  if (!fscanf(file, "%lf", &rhs[i * order])) {
+	  	  if (!scanf("%lf", &rhs[i])) {
 	    	  break;
 	      }
-		  // printf("%lf\n", rhs[i * order]); 
+		  // printf("%lf\n", rhs[i]); 
 	  }
-
 
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
 	  for (i = 0; i < order; i++) {
@@ -98,7 +89,6 @@ int main(int argc, char **argv) {
 	  }
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
 	  
-	  fclose(file);
 	  
 	  // double k = malloc(sizeof(double));
 	  // double x0 = malloc(sizeof(double));
