@@ -1,20 +1,35 @@
 /* File:       conj_grad.c
+ * Author:     Vincent Zhang
  *
- * Purpose:    A simple Ping-Pong implementation in MPI
+ * Purpose:    A serial conjugate gradient solver program. Due to time limits,
+ *             the MPI parallel version is not included in this source code.
  *
- * Compile:    mpicc -g -Wall -o mpi_hello mpi_hello.c
- * Run:        mpiexec -n <number of processes> mpi_hello
+ * Compile:    gcc -g -Wall -lm -o conj_grad conj_grad.c
+ * Run:        conj_grad [order] [tolerance] [iterations] 
+ *                       [Optional suppress output(n)]
  *
- * Input:      None
- * Output:     Length of message sent and average elapsed time per round
+ * Input:      A file that contains a symmetric, positive definite matrix A,  
+ *             and the corresponding right hand side vector B. Preferably, each
+ *             line consists of [n] elements and the [n+1] line would be the b.
+ * Output:     1. The number of iterations,
+ *             2. The time used by the solver (not including I/O),
+ *             3. The solution to the linear system (if not suppressed),
+ *             4. The norm of the residual calculated by the conjugate gradient 
+ *                method, and 
+ *             5. The norm of the residual calculated directly from the 
+ *                definition of residual.
  *
- * Algorithm:  It starts with process 0 sending a message to process 1, process
- *             1 receives it and sends 
+ * Algorithm:  The matrix A's initially read and parsed into an one-dimensional
+ *             array; the right hand side vector b is stored in an array as 
+ *             well. After some preparation work of allocating memory and 
+ *             assigning variables the program jumps into the main loop, the 
+ *             conjugate gradient solver. For the exact mathematical procedure,
+ *             please refer to http://www.cs.usfca.edu/~peter/cs625/prog2.pdf
+ *             and http://en.wikipedia.org/wiki/Conjugate_gradient_method for a
+ *             much better demonstration.
  *
- * Analysis:   Each process sends a message to process 0,
- *             which prints the messages it has received,
- *             as well as its own message.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +37,6 @@
 // #include <mpi.h>     /* For MPI functions, etc */
 #include "timer.h"
 
-const int MAX_STRING = 100;
 
 double dotProduct(double* a, double* b, int size) {
 	double sum = 0.0;
@@ -66,6 +80,7 @@ double* vectorSubtract(double* dest, double* a, double* b, int size) {
 }
 
 double* matrixVector(double* dest, double* matrix, double* v, int size) {
+	/* The Cross Product */
 	// printf("== Begin: matrix vector product ==");
 	int i, j;
 	for (i = 0; i < size; i++) {
@@ -79,6 +94,7 @@ double* matrixVector(double* dest, double* matrix, double* v, int size) {
 }
 
 void assignVector(double* a, double* b, int size) {
+	/* Essentially does the same job as memcpy. */
 	int i;
 	for (i = 0; i < size; i++) {
 		a[i] = b[i];
@@ -90,6 +106,7 @@ void assignVector(double* a, double* b, int size) {
 
 int main(int argc, char **argv) {
   int        p, i, j, k, order, max_iterations, suppress_output;
+  double     start, finish, elapsed;
   double	 tolerance;
    
   // for (i = 0; i < argc; i++) {
@@ -179,6 +196,8 @@ int main(int argc, char **argv) {
 		  r_prev_prev[i] = rhs[i];
 	  }
 	  
+	  GET_TIME(start);
+	  
 	  while ((k < max_iterations) && (dotProduct(r, r, order) > tolerance)) {
 	  	  // memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
 		  assignVector(r_prev_prev, r_prev, order);
@@ -189,10 +208,10 @@ int main(int argc, char **argv) {
 		  if (k == 1) {
 			  
 			  /* P_1 = R_0 */
-			  // memcpy(p, r_prev, (order * sizeof(double)));
-			  // memcpy(p_prev, p, (order * sizeof(double)));
-			  assignVector(p, r_prev, order);
-			  assignVector(p_prev, p, order);
+			  memcpy(p, r_prev, (order * sizeof(double)));
+			  memcpy(p_prev, p, (order * sizeof(double)));
+			  // assignVector(p, r_prev, order);
+			  // assignVector(p_prev, p, order);
 		  } else {
 			  /* BETA_k = [R_(k-1) * R_(k-1)] / [R_(k-2) * R_(k-2)]  */
 			  beta = dotProduct(r_prev, r_prev, order)/dotProduct(r_prev_prev, r_prev_prev, order);
@@ -225,7 +244,11 @@ int main(int argc, char **argv) {
 		  
 	  }
 	  
+      GET_TIME(finish);
+      elapsed = finish - start;
+	  
 	  printf("========= Solver Completed ========= \n");
+	  printf("The code to be timed took %lf seconds\n", elapsed);
 	  printf("Number of iterations: %d \n", k);
 	  
 	  if (suppress_output == 0) {
@@ -257,49 +280,25 @@ int main(int argc, char **argv) {
 	  
 	  
   } else {
-	  printf("Usage: %s [order] [tolerance] [iterations] [Suppress(n)]\n", argv[0]);
+	  printf("Usage: %s [order] [tolerance] [iterations] [Optional suppress output(n)]\n", argv[0]);
   }
+
+  /* Free all objects that allocated memory once at the end */
+  free(matrix);
+  free(rhs);
   
-  // /* Start up MPI */
-  // MPI_Init(NULL, NULL);
-  // 
-  // /* Get the number of processes */
-  // MPI_Comm_size(MPI_COMM_WORLD, &p);
-  // 
-  // /* Get my rank among all the processes */
-  // MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-  // 
-  // MPI_Get_processor_name(hostname, &len);
-
-  // printf("Proc %d > running on %s\n", my_rank, hostname);
-  // 
-  // // Allocate space memory for matrices
-  // double* A = malloc(1000 * 1000 * sizeof(double));
-  // double* B = malloc(1000 * 1000 * sizeof(double));
-  // double* C = malloc(1000 * 1000 * sizeof(double));
-  // 
-  // if (my_rank == 0) {
-  //   GET_TIME(start);
-  //   
-  //   for (i = 0; i < 1000; i++) {
-  //     for (j = 0; j < 1000; j++) {
-  //       C[i*1000 + j] = 0.0;
-  //       for (k = 0; k < 1000; k++) {
-  //         C[i*1000 + j] += A[i*1000 + k] * B[k*1000 + j];
-  //       }
-  //     }
-  //   }
-  //   
-  //   GET_TIME(finish);
-  //   elapsed = finish - start;
-  //   average_elapsed = elapsed / (2*1000000000);
-  //   printf("The code to be timed took %e seconds\n", average_elapsed);
-  // }
-  // 
-  // free(A);
-
-  /* Shut down MPI */
-  // MPI_Finalize();
+  free(x);
+  free(s);
+  free(p);
+  free(r);
+  
+  free(x_prev);
+  free(s_prev);
+  free(p_prev);
+  free(r_prev);
+  free(r_prev_prev);
+  free(holderVector);
+  
   return 0;
 } /* main */
 
