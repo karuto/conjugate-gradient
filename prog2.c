@@ -54,27 +54,50 @@ int main(int argc, char **argv) {
 	  } else {
 		  printf("==== No optional command \n");
 	  }
-	  
+
+	  double* rhs = malloc(order * sizeof(double)); /* Right hand side, b */
 	  double* matrix = malloc(order * order * sizeof(double)); /* 1-d array */
 	  // for (i = 0; i < order; ++i) { /* number of rows */
 	  // 		  matrix[i] = malloc(order*sizeof(double));	/* number of cols */	  	
 	  // }
-	  
 	  FILE *file;
 	  file=fopen("matrix.txt", "r");
 	  
 	  int i, j;
 	  
-	  for(i = 0; i < order; i++) { /* number of rows */
-	  	for(j = 0; j < order; j++) { /* number of cols */
+	  /* Read matrix from file and put into array of doubles */
+	  for (i = 0; i < order; i++) { /* number of rows */
+	  	  for (j = 0; j < order; j++) { /* number of cols */
 	      //Use lf format specifier, %c is for character
-	      if (!fscanf(file, "%lf", &matrix[(i * order) + j])) {
-	      	break;
-	      }
-		  printf("%lf\n", matrix[(i * order) + j]); 
+	        if (!fscanf(file, "%lf", &matrix[(i * order) + j])) {
+	      		break;
+	        }
+		    // printf("%lf\n", matrix[(i * order) + j]); 
 		  //Use lf format specifier, \n is for new line
-	    }
+	      }
 	  }
+
+	  printf("==== PRINTING MATRIX ==== \n");
+	  for (i = 0; i < (order * order); i++) {
+	  	  printf("%f\n", matrix[i]);
+	  }
+	  printf("==== PRINTING MATRIX ==== \n");
+	  
+	  /* Read right hand side */
+	  for (i = 0; i < order; i++) {
+	  	  if (!fscanf(file, "%lf", &rhs[i * order])) {
+	    	  break;
+	      }
+		  // printf("%lf\n", rhs[i * order]); 
+	  }
+
+
+	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
+	  for (i = 0; i < order; i++) {
+	  	  printf("%f\n", rhs[i]);
+	  }
+	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
+	  
 	  fclose(file);
 	  
 	  // double k = malloc(sizeof(double));
@@ -126,3 +149,5 @@ int main(int argc, char **argv) {
   // MPI_Finalize();
   return 0;
 } /* main */
+
+
