@@ -2,6 +2,8 @@
 *.o
 *.ko
 
+.DS_Store
+
 # Libraries
 *.lib
 *.a
