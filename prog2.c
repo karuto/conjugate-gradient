@@ -70,7 +70,7 @@ double* matrixVector(double* dest, double* matrix, double* v, int size) {
 	int i, j;
 	for (i = 0; i < size; i++) {
 		for (j = 0; j < size; j++) {
-			dest[i] += v[j] * matrix[i*size+j];
+			dest[i] += matrix[i*size+j] * v[j];
 			// printf("Matrix vector check, round: %d, sum = %lf\n", i, dest[i]);
 		}
 	}
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 	  
 	  int k = 0;
 	  double beta = 0.0;
-	  double alpha = 0.0;
+	  double alpha;
 	  double* s = malloc(order * sizeof(double));
 	  double* x = malloc(order * sizeof(double));
 	  double* x_prev = malloc(order * sizeof(double));
@@ -170,17 +170,20 @@ int main(int argc, char **argv) {
 	  
 	  while ((k < max_iterations) && (dotProduct(r, r, order) > tolerance)) {
 	      memcpy(x_prev, x, (order * sizeof(double)));
-	      memcpy(p_prev, p, (order * sizeof(double)));
 	  	  // memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
 	  	  k++;
 		  if (k == 1) {
+			  r[0] = -8;
+			  r[1] = -3;
 			  /* P_1 = R_0 */
 			  memcpy(p, r, (order * sizeof(double)));
 		  } else {
 			  /* BETA_k = [R_(k-1) * R_(k-1)] / [R_(k-2) * R_(k-2)]  */
 			  beta = dotProduct(r, r, order)/dotProduct(r_prev, r_prev, order);
-			  printf("BETA === %lf\n", beta);
+			  //printf("BETA === %lf\n", beta);-
 			  
+	      memcpy(p_prev, p, (order * sizeof(double)));
+	      
 			  /* P_k = R_(k-1) + [BETA_k * P_(k-1)] */
 			  tmpVector = scalarVector(tmpVector, p_prev, beta, order);
 			  p = vectorAdd(p, r_prev, tmpVector, order);
@@ -188,14 +191,19 @@ int main(int argc, char **argv) {
 		  /* S_k = (A * P_k) */
 		  s = matrixVector(s, matrix, p, order);
 		  
+	  	memcpy(r_prev, r, (order * sizeof(double)));
+		  
 		  /* ALPHA_k = [R_(k-1) * R_(k-1)] / [P_k * S_k] */
-		  alpha = dotProduct(r_prev, r_prev, order)/dotProduct(p, s, order);
+		  double d1 = dotProduct(r_prev, r_prev, order);
+		  double d2 = dotProduct(p, s, order);
+		  alpha = d1/d2;
+		  
+		  printf("################## %lf, %lf, %lf\n", d1, d2, alpha);
 		  
 		  /* X_k = X_(k-1) + (ALPHA_k * P_k) */
 		  tmpVector = scalarVector(tmpVector, p, alpha, order);
 		  x = vectorAdd(x, x_prev, tmpVector, order);
 
-	  	  memcpy(r_prev, r, (order * sizeof(double)));
 		  
 		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
 		  tmpVector = scalarVector(tmpVector, s, alpha, order);
