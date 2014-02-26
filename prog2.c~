@@ -26,8 +26,7 @@ const int MAX_STRING = 100;
 
 double dotProduct(double* a, double* b, int size) {
 	double sum = 0;
-	int i;
-	for (i = 0; i < size; i++) {
+	for (int i = 0; i < size; i++) {
 		sum += (a[i] * b[i]);
 		// printf("Dot product check, round: %d, sum = %lf\n", i, sum);
 	}
