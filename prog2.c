@@ -1,4 +1,4 @@
-/* File:       mpi_float.c
+/* File:       conj_grad.c
  *
  * Purpose:    A simple Ping-Pong implementation in MPI
  *
@@ -25,7 +25,7 @@
 const int MAX_STRING = 100;
 
 double dotProduct(double* a, double* b, int size) {
-	double sum = 0;
+	double sum = 0.0;
 	int i;
 	for (i = 0; i < size; i++) {
 		sum += (a[i] * b[i]);
@@ -69,6 +69,7 @@ double* matrixVector(double* dest, double* matrix, double* v, int size) {
 	// printf("== Begin: matrix vector product ==");
 	int i, j;
 	for (i = 0; i < size; i++) {
+		dest[i] = 0.0;
 		for (j = 0; j < size; j++) {
 			dest[i] += matrix[i*size+j] * v[j];
 			// printf("Matrix vector check, round: %d, sum = %lf\n", i, dest[i]);
@@ -77,147 +78,176 @@ double* matrixVector(double* dest, double* matrix, double* v, int size) {
 	return dest;
 }
 
-
+void assignVector(double* a, double* b, int size) {
+	int i;
+	for (i = 0; i < size; i++) {
+		a[i] = b[i];
+	}
+}
 
 
 
 int main(int argc, char **argv) {
-  char       hostname[MAX_STRING];
-  int        my_rank, p, len, i, j, k;
-  double     start, finish, elapsed, average_elapsed;
-  
+  int        p, i, j, k, order, max_iterations;
   double	 tolerance;
-  int		 order, max_iterations; 
-  char		 suppress[MAX_STRING];  	  
+   
+  // for (i = 0; i < argc; i++) {
+  // 	  printf("##### %d = %s\n", i, argv[i]);
+  // }
   
   // printf("argc = %d\n", argc);
-  if (argc == 7 || argc == 8) {
-	  //TODO: Change these as we move into parallel, this is for sequential version only
-	  
-	  order = atoi(argv[4]); /* Determines dimension of matrix A */
+  if (argc > 3) {
+	  order = atoi(argv[1]); /* Determines dimension of matrix A */
       printf("==== Dimension of matrix: %d\n", order);
-	  tolerance = atof(argv[5]);
-	  max_iterations = atoi(argv[6]); 
-	  if (argc == 8) {
-		  printf("==== %s\n", argv[7]);
+	  tolerance = atof(argv[2]);
+	  max_iterations = atoi(argv[3]); 
+	  if (argc == 5) {
+		  printf("==== %s\n", argv[4]);
 	  } else {
 		  printf("==== No optional command \n");
 	  }
 
-	  double* rhs = malloc(order * sizeof(double)); /* Right hand side, b */
-	  double* matrix = malloc(order * order * sizeof(double)); /* 1-d array */
+	  /* 1-d array for A */
+	  double* matrix = malloc(order * order * sizeof(double)); 
+ 	  /* Right hand side, b */ 
+	  double* rhs = malloc(order * sizeof(double));
 	  
-	  int i, j;
 	  
-	  /* Read matrix from file and put into array of doubles */
+	  /* Read matrix (A) from file and put into array of doubles */
 	  for (i = 0; i < order; i++) { /* number of rows */
 	  	  for (j = 0; j < order; j++) { /* number of cols */
-	      //Use lf format specifier, %c is for character
 	        if (!scanf("%lf", &matrix[(i * order) + j])) {
 	      		break;
 	        }
-		    // printf("%lf\n", matrix[(i * order) + j]); 
-		  //Use lf format specifier, \n is for new line
 	      }
 	  }
-
+	  
+	  /* Read right hand side (b) */
+	  for (i = 0; i < order; i++) {
+	  	  if (!scanf("%lf", &rhs[i])) {
+	    	  break;
+	      }
+	  }
+	  
+	  
 	  printf("==== PRINTING MATRIX ==== \n");
 	  for (i = 0; i < (order * order); i++) {
 	  	  printf("%f\n", matrix[i]);
 	  }
 	  printf("==== PRINTING MATRIX ==== \n");
 	  
-	  /* Read right hand side */
-	  for (i = 0; i < order; i++) {
-	  	  if (!scanf("%lf", &rhs[i])) {
-	    	  break;
-	      }
-		  // printf("%lf\n", rhs[i]); 
-	  }
+	  
 
+	  /*
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
 	  for (i = 0; i < order; i++) {
 	  	  printf("%f\n", rhs[i]);
 	  }
 	  printf("==== PRINTING RIGHT HAND SIDE ==== \n");
+	  */
 	  
 	  
-	  int k = 0;
+	  /* Prepare variables for the main loop */
+	  k = 0;
 	  double beta;
 	  double alpha;
-	  double* s = malloc(order * sizeof(double));
 	  double* x = malloc(order * sizeof(double));
+	  double* s = malloc(order * sizeof(double));
 	  double* x_prev = malloc(order * sizeof(double));
 	  double* p = malloc(order * sizeof(double));
 	  double* p_prev = malloc(order * sizeof(double));
 	  double* r = malloc(order * sizeof(double));
 	  double* r_prev = malloc(order * sizeof(double));
 	  double* r_prev_prev = malloc(order * sizeof(double));
-	  double* tmpVector = malloc(order * sizeof(double));
+	  double* holderVector = malloc(order * sizeof(double));
 	  
-	  memcpy(r, rhs, (order * sizeof(double)));
+	  /* Before we start, copy values of B into R_0 */
+	  // memcpy(r, rhs, (order * sizeof(double)));
+	  // memcpy(r_prev, rhs, (order * sizeof(double)));
+	  // memcpy(r_prev_prev, rhs, (order * sizeof(double)));
+	  for (i = 0; i < order; i++) {
+		  x[i] = 0;
+		  r[i] = rhs[i];
+		  r_prev[i] = rhs[i];
+		  r_prev_prev[i] = rhs[i];
+	  }
 	  
 	  while ((k < max_iterations) && (dotProduct(r, r, order) > tolerance)) {
 	  	  // memcpy(r_prev_prev, r_prev, (order * sizeof(double)));
+		  assignVector(r_prev_prev, r_prev, order);
+		  assignVector(r_prev, r, order);
+		  assignVector(p_prev, p, order);
+	 	  assignVector(x_prev, x, order);
 	  	  k++;
 		  if (k == 1) {
+			  
 			  /* P_1 = R_0 */
-			  memcpy(p, r, (order * sizeof(double)));
+			  // memcpy(p, r_prev, (order * sizeof(double)));
+			  // memcpy(p_prev, p, (order * sizeof(double)));
+			  assignVector(p, r_prev, order);
+			  assignVector(p_prev, p, order);
 		  } else {
 			  /* BETA_k = [R_(k-1) * R_(k-1)] / [R_(k-2) * R_(k-2)]  */
-			  beta = dotProduct(r, r, order)/dotProduct(r_prev, r_prev, order);
+			  beta = dotProduct(r_prev, r_prev, order)/dotProduct(r_prev_prev, r_prev_prev, order);
 			  
-	      memcpy(p_prev, p, (order * sizeof(double)));
+	          // memcpy(p_prev, p, (order * sizeof(double)));
 	      
 			  /* P_k = R_(k-1) + [BETA_k * P_(k-1)] */
-			  tmpVector = scalarVector(tmpVector, p_prev, beta, order);
-			  p = vectorAdd(p, r, tmpVector, order);
+			  holderVector = scalarVector(holderVector, p_prev, beta, order);
+			  p = vectorAdd(p, r, holderVector, order);
 		  }
 		  /* S_k = (A * P_k) */
 		  s = matrixVector(s, matrix, p, order);
 	  
-	  	memcpy(r_prev, r, (order * sizeof(double)));
+	  	  // memcpy(r_prev, r, (order * sizeof(double)));
 		  
 		  /* ALPHA_k = [R_(k-1) * R_(k-1)] / [P_k * S_k] */
-		  double d1 = dotProduct(r, r, order);
+		  double d1 = dotProduct(r_prev, r_prev, order);
 		  double d2 = dotProduct(p, s, order);
 		  alpha = d1/d2;
 		  
-	    memcpy(x_prev, x, (order * sizeof(double)));
+	      // memcpy(x_prev, x, (order * sizeof(double)));
 	  		  
 		  /* X_k = X_(k-1) + (ALPHA_k * P_k) */
-		  tmpVector = scalarVector(tmpVector, p, alpha, order);
-		  x = vectorAdd(x, x_prev, tmpVector, order);
+		  holderVector = scalarVector(holderVector, p, alpha, order);
+		  x = vectorAdd(x, x_prev, holderVector, order);
 		  
 		  /* R_k = R_(k-1) - (ALPHA_k * S_k) */
-		  tmpVector = scalarVector(tmpVector, s, alpha, order);
-		  r = vectorSubtract(r, r, tmpVector, order);
+		  holderVector = scalarVector(holderVector, s, alpha, order);
+		  r = vectorSubtract(r, r_prev, holderVector, order);
 		  
 	  }
 	  
-	  printf("========= LOOP COMPLETED =========\n");
+	  printf("========= Solver Completed =========\n");
 	  printf("Number of iterations: %d\n", k);
 	  printf("Solution to the matrix:\n");
 	  for (i = 0; i < (order); i++) {
 	  	  printf("%f\n", x[i]);
 	  }
+	  
 	  printf("The norm of the residual calculated by the conjugate gradient method: \n");
 	  double norm;
 	  for (i = 0; i < (order); i++) {
 	  	  norm += r[i]*r[i];
 	  }
 	  printf("%lf\n", sqrt(norm));
-	  /*
+	  
+	  
+	  /* Calculate the residual with the algorithm
+	  	 R_k = B - (A * X_k) */
+	  r = vectorSubtract(r, rhs, matrixVector(holderVector, matrix, x, order), order);
+	  
+	  
 	  printf("The norm of the residual calculated directly from the definition of residual: \n");
-	  //TODO: This is just a holder.
 	  for (i = 0; i < (order * order); i++) {
-	  	  printf("%f\n", r[i]);
+	  	  norm += r[i]*r[i];
 	  }
-	  */
+	  printf("%lf\n", sqrt(norm));
+	  
 	  
 	  
   } else {
-	  printf("Incorrect usage. \nUsage: mpiexec -n 4 ./conj_grad 100 1.0e-6 50 (n)\n");
+	  printf("Usage: %s [order] [tolerance] [iterations] [Suppress(n)]\n", argv[0]);
   }
   
   // /* Start up MPI */
